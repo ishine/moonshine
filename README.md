@@ -4,9 +4,11 @@
 
 <h1 style="text-align:center;">Moonshine</h1>
 
-[[Blog]](https://petewarden.com/2024/10/21/introducing-moonshine-the-new-state-of-the-art-for-speech-to-text/) [[Paper]](https://arxiv.org/abs/2410.15608) [[Model Card]](https://github.com/usefulsensors/moonshine/blob/main/model-card.md) [[Podcast]](https://notebooklm.google.com/notebook/d787d6c2-7d7b-478c-b7d5-a0be4c74ae19/audio)
+[[Blog]](https://petewarden.com/2024/10/21/introducing-moonshine-the-new-state-of-the-art-for-speech-to-text/) [[Paper 1]](https://arxiv.org/abs/2410.15608) [[Paper 2]](https://arxiv.org/abs/2509.02523) [[Model Card]](https://github.com/usefulsensors/moonshine/blob/main/model-card.md) [[Podcast]](https://notebooklm.google.com/notebook/d787d6c2-7d7b-478c-b7d5-a0be4c74ae19/audio)
 
-Moonshine is a family of speech-to-text models optimized for fast and accurate automatic speech recognition (ASR) on resource-constrained devices. It is well-suited to real-time, on-device applications like live transcription and voice command recognition. Moonshine obtains word-error rates (WER) better than similarly-sized tiny.en and base.en Whisper models from OpenAI on the datasets used in the [OpenASR leaderboard](https://huggingface.co/spaces/hf-audio/open_asr_leaderboard) maintained by HuggingFace:
+Moonshine is a family of speech-to-text models optimized for fast and accurate automatic speech recognition (ASR) on resource-constrained devices. It is well-suited to real-time, on-device applications like live transcription and voice command recognition. English Moonshine obtains word-error rates (WER) better than similarly-sized tiny.en and base.en Whisper models from OpenAI, and non-English Moonshine variants [outperform](#supported-languages) Whisper Small and Medium, which are 9x and 28x larger, respectively.
+
+English Moonshine Tiny and Base are on the [OpenASR leaderboard](https://huggingface.co/spaces/hf-audio/open_asr_leaderboard) maintained by HuggingFace:
 
 <table>
 <tr><th>Tiny</th><th>Base</th></tr>
@@ -40,11 +42,27 @@ Moonshine is a family of speech-to-text models optimized for fast and accurate a
 
 </td></tr> </table>
 
-Moonshine's compute requirements scale with the length of input audio. This means that shorter input audio is processed faster, unlike existing Whisper models that process everything as 30-second chunks. To give you an idea of the benefits: Moonshine processes 10-second audio segments _5x faster_ than Whisper while maintaining the same (or better!) WER.
+Moonshine's compute requirements scale with the length of input audio. This means that shorter input audio is processed faster, unlike Whisper models that process everything as 30-second chunks. To give you an idea of the benefits: Moonshine processes 10-second audio segments _5x faster_ than Whisper while maintaining the same (or significantly better!) WER/CER.
 
-Moonshine Base is approximately 400MB, while Tiny is around 190MB. Both publicly-released models currently support English only.
+Unquantized Moonshine Base is 62M parameters (or 400MB), while Tiny is 27M parameters (around 190MB).
 
-This repo hosts inference code and demos for Moonshine.
+## Supported Languages
+
+Moonshine also currently supports 7 additional languages. These models are more accurate than Whisper Small and Whisper Medium, while being 9x and 28x smaller, respectively, and run significantly faster on edge devices. Below is a performance summary. Arabic, Chinese, Japanese, and Korean are character-error rates (CER); all others are WER.
+
+| Language    | Tag  | Moonshine Tiny (27M) | Moonshine Base (62M) | Whisper Tiny (39M)  | Whisper Base (74M) | Whisper Small (244M) | Whisper Medium (769M) |
+| ----------  | ---- | ---------      | -------        | -------      | -------      | -------       | -------        |
+| Arabic      | `ar` | 24.76          |                | 52.40        | 48.25        | 32.44         | 25.44          |
+| Chinese     | `zh` | 32.77          |                | 68.51        | 59.13        | 46.76         | 40.41          |
+| Japanese    | `ja` | 15.69          |                | 96.71        | 72.69        | 40.94         | 27.88          |
+| Korean      | `ko` | 9.85           |                | 23.92        | 15.93        | 9.87          | 7.68           |
+| Spanish     | `es` |                | TBA            |              |              |               |                |
+| Ukrainian   | `uk` | 19.70          |                | 66.77        | 48.56        | 25.93         | 16.51          |
+| Vietnamese  | `vi` | 15.92          |                | 96.4         | 52.79        | 26.46         | 18.49          |
+
+Read [the paper](https://arxiv.org/abs/2509.02523) for more details on our other "flavors" of Moonshine.
+
+## Table of Contents
 
 - [Installation](#installation)
   - [1. Create a virtual environment](#1-create-a-virtual-environment)
@@ -53,10 +71,10 @@ This repo hosts inference code and demos for Moonshine.
   - [3. Try it out](#3-try-it-out)
 - [Examples](#examples)
   - [Live Captions](#live-captions)
-  - [Running in the Browser](#running-in-the-browser)
   - [CTranslate2](#ctranslate2)
   - [HuggingFace Transformers](#huggingface-transformers)
-- [TODO](#todo)
+  - [Web Applications](#web-applications)
+- [License](#license)
 - [Citation](#citation)
 
 ## Installation
@@ -130,7 +148,7 @@ python
 ['Ever tried ever failed, no matter try again, fail again, fail better.']
 ```
 
-The first argument is a path to an audio file and the second is the name of a Moonshine model. `moonshine/tiny` and `moonshine/base` are the currently available models.
+The first argument is a path to an audio file and the second is the name of a Moonshine model. `moonshine/tiny` and `moonshine/base` are the currently available models. If you wish to use one of the non-English Moonshine models, just append the language [IETF tag](https://en.wikipedia.org/wiki/IETF_language_tag) to the model name, e.g., `moonshine/tiny-ko`. See [the table](#supported-languages) for supported languages and their tags.
 
 ## Examples
 
@@ -140,17 +158,13 @@ Since the Moonshine models can be used with a variety of different runtimes and 
 
 You can try the Moonshine ONNX models with live input from a microphone with the [live captions demo](/demo/README.md#demo-live-captioning-from-microphone-input).
 
-### Running in the Browser
-
-You can try out the Moonshine ONNX models locally in a web browser with our [HuggingFace space](https://huggingface.co/spaces/UsefulSensors/moonshine-web). We've included the [source for this demo](/demo/moonshine-web/) in this repository; this is a great starting place for those wishing to build web-based applications with Moonshine.
-
 ### CTranslate2
 
 The files for the CTranslate2 versions of Moonshine are available at [huggingface.co/UsefulSensors/moonshine/tree/main/ctranslate2](https://huggingface.co/UsefulSensors/moonshine/tree/main/ctranslate2), but they require [a pull request to be merged](https://github.com/OpenNMT/CTranslate2/pull/1808) before they can be used with the mainline version of the framework. Until then, you should be able to try them with [our branch](https://github.com/njeffrie/CTranslate2/tree/master), with [this example script](https://github.com/OpenNMT/CTranslate2/pull/1808#issuecomment-2439725339).
 
 ### HuggingFace Transformers
 
-Both models are also available on the HuggingFace hub and can be used with the `transformers` library, as follows:
+Moonshine models are also available on the HuggingFace hub and can be used with the `transformers` library, as follows:
 
 ```python
 import torch
@@ -171,32 +185,26 @@ transcription = processor.batch_decode(generated_ids, skip_special_tokens=True)[
 print(transcription)
 ```
 
-## TODO
-* [x] Live transcription demo
+If you wish to use one of the non-English Moonshine models, just append the [IETF code](https://en.wikipedia.org/wiki/IETF_language_tag) to the repo ID, e.g., `UsefulSensors/moonshine-tiny-ko`. See [the table](#supported-languages) for supported languages and their tags.
 
-* [x] ONNX model
+### Web Applications
 
-* [x] HF transformers support
-
-* [x] Demo Moonshine running in the browser
-
-* [ ] CTranslate2 support (complete but [awaiting a merge](https://github.com/OpenNMT/CTranslate2/pull/1808))
-
-* [ ] MLX support
-
-* [ ] Fine-tuning code
-
-* [ ] HF transformers.js support
-
-* [ ] Long-form transcription demo 
+Use our [MoonshineJS](https://github.com/moonshine-ai/moonshine-js) library to run Moonshine models in the web browser with a few lines of Javascript.
 
 ## Known Issues
 
 ### UserWarning: You are using a softmax over axis 3 of a tensor of shape torch.Size([1, 8, 1, 1])
 This is a benign warning arising from Keras. For the first token in the decoding loop, the attention score matrix's shape is 1x1, which triggers this warning. You can safely ignore it, or run with `python -W ignore` to suppress the warning.
 
+## License
+All inference code in this repo is released under the MIT license. The English Moonshine models are also released under the MIT license. 
+
+All non-English Moonshine variants are released under the [Moonshine AI Community License](https://www.moonshine.ai/moonshine_community_license.txt) (TLDR: Models are free to use for researchers, developers, small businesses, and creators with less than $1M in annual revenue.). 
+
+A copy of both licenses is included in this repository.
+
 ## Citation
-If you benefit from our work, please cite us:
+If you benefit from our work, please cite our paper:
 ```
 @misc{jeffries2024moonshinespeechrecognitionlive,
       title={Moonshine: Speech Recognition for Live Transcription and Voice Commands}, 
@@ -206,5 +214,18 @@ If you benefit from our work, please cite us:
       archivePrefix={arXiv},
       primaryClass={cs.SD},
       url={https://arxiv.org/abs/2410.15608}, 
+}
+```
+
+Please also cite our paper on non-English Moonshine variants if you find them useful:
+```
+@misc{king2025flavorsmoonshinetinyspecialized,
+      title={Flavors of Moonshine: Tiny Specialized ASR Models for Edge Devices}, 
+      author={Evan King and Adam Sabra and Manjunath Kudlur and James Wang and Pete Warden},
+      year={2025},
+      eprint={2509.02523},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2509.02523}, 
 }
 ```

@@ -1,8 +1,40 @@
+_MOONSHINE_FLAVORS = {
+    "tiny": {
+        "token_rate": 6
+    },
+    "tiny-ar": {
+        "token_rate": 13
+    },
+    "tiny-zh": {
+        "token_rate": 13
+    },
+    "tiny-ja": {
+        "token_rate": 13
+    },
+    "tiny-ko": {
+        "token_rate": 13
+    },
+    "tiny-uk": {
+        "token_rate": 8
+    },
+    "tiny-vi": {
+        "token_rate": 13
+    },
+    "base": {
+        "token_rate": 6
+    },
+    "base-es": {
+        "token_rate": 6
+    }
+}
+
 def _get_onnx_weights(model_name, precision="float"):
     from huggingface_hub import hf_hub_download
 
-    if model_name not in ["tiny", "base"]:
-        raise ValueError(f'Unknown model "{model_name}"')
+    assert model_name in _MOONSHINE_FLAVORS, (
+        f'Unknown model "{model_name}"'
+    )
+
     repo = "UsefulSensors/moonshine"
     subfolder = f"onnx/merged/{model_name}/{precision}"
 
@@ -13,7 +45,7 @@ def _get_onnx_weights(model_name, precision="float"):
 
 
 class MoonshineOnnxModel(object):
-    def __init__(self, models_dir=None, model_name=None, model_precision="float"):
+    def __init__(self, models_dir=None, model_name=None, model_precision="float", token_rate=None):
         import onnxruntime
 
         if models_dir is None:
@@ -28,6 +60,11 @@ class MoonshineOnnxModel(object):
                 f"{models_dir}/{x}.onnx"
                 for x in ("encoder_model", "decoder_model_merged")
             ]
+            self.token_rate = token_rate
+
+        if token_rate is None:
+            self.token_rate = _MOONSHINE_FLAVORS[model_name]["token_rate"]
+
         self.encoder = onnxruntime.InferenceSession(encoder)
         self.decoder = onnxruntime.InferenceSession(decoder)
 
@@ -52,8 +89,7 @@ class MoonshineOnnxModel(object):
     def generate(self, audio, max_len=None):
         "audio has to be a numpy array of shape [1, num_audio_samples]"
         if max_len is None:
-            # max 6 tokens per second of audio
-            max_len = int((audio.shape[-1] / 16_000) * 6)
+            max_len = int((audio.shape[-1] / 16_000) * self.token_rate)
 
         import numpy as np
 

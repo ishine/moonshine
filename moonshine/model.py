@@ -588,6 +588,7 @@ class Moonshine(object):
         enc_ff_swiglu=False,
         dec_ff_swiglu=True,
         vocab_size=32768,
+        token_rate=6
     ):
         self.preprocessor = AudioPreprocessor(dim)
         self.encoder = Encoder(
@@ -602,6 +603,8 @@ class Moonshine(object):
         self.enc_n_layers = enc_n_layers
         self.dec_n_layers = dec_n_layers
 
+        self.token_rate = token_rate
+
     def _load_weights(self, preprocessor_weights, encoder_weights, decoder_weights):
         self.preprocessor.preprocess.load_weights(preprocessor_weights)
         self.encoder.encoder.load_weights(encoder_weights)
@@ -610,7 +613,7 @@ class Moonshine(object):
     def generate(self, audio, max_len=None):
         if max_len is None:
             # max 6 tokens per second of audio
-            max_len = int((audio.shape[-1] / 16_000) * 6)
+            max_len = int((audio.shape[-1] / 16_000) * self.token_rate)
         audio_preprocessed = self.preprocessor(audio)
         audio_features = self.encoder(
             audio_preprocessed,
@@ -632,6 +635,35 @@ class Moonshine(object):
 
         return keras.ops.convert_to_numpy(output)
 
+_MOONSHINE_FLAVORS = {
+    "tiny": {
+        "token_rate": 6
+    },
+    "tiny-ar": {
+        "token_rate": 13
+    },
+    "tiny-zh": {
+        "token_rate": 13
+    },
+    "tiny-ja": {
+        "token_rate": 13
+    },
+    "tiny-ko": {
+        "token_rate": 13
+    },
+    "tiny-uk": {
+        "token_rate": 8
+    },
+    "tiny-vi": {
+        "token_rate": 13
+    },
+    "base": {
+        "token_rate": 6
+    },
+    "base-es": {
+        "token_rate": 6
+    }
+}
 
 def _get_weights(model_name):
     from huggingface_hub import hf_hub_download
@@ -645,12 +677,15 @@ def _get_weights(model_name):
 
 
 def load_model(model_name):
-    if model_name == "moonshine/base":
-        model = Moonshine(416, 416, 8, 8, 8)
-        model._load_weights(*_get_weights("base"))
-        return model
-    if model_name == "moonshine/tiny":
-        model = Moonshine(288, 288, 8, 6, 6)
-        model._load_weights(*_get_weights("tiny"))
-        return model
+    model_flavor = model_name.split("/")[-1]
+    if model_flavor in _MOONSHINE_FLAVORS:
+        token_rate = _MOONSHINE_FLAVORS[model_flavor]["token_rate"]
+        if "base" in model_flavor:
+            model = Moonshine(416, 416, 8, 8, 8, token_rate)
+            model._load_weights(*_get_weights(model_flavor))
+            return model
+        if "tiny" in model_flavor:
+            model = Moonshine(288, 288, 8, 6, 6, token_rate)
+            model._load_weights(*_get_weights(model_flavor))
+            return model
     assert False, f"{model_name} not a valid moonshine model"
