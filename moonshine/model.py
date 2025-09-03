@@ -588,7 +588,7 @@ class Moonshine(object):
         enc_ff_swiglu=False,
         dec_ff_swiglu=True,
         vocab_size=32768,
-        token_rate=6
+        token_rate=6,
     ):
         self.preprocessor = AudioPreprocessor(dim)
         self.encoder = Encoder(
@@ -635,35 +635,19 @@ class Moonshine(object):
 
         return keras.ops.convert_to_numpy(output)
 
+
 _MOONSHINE_FLAVORS = {
-    "tiny": {
-        "token_rate": 6
-    },
-    "tiny-ar": {
-        "token_rate": 13
-    },
-    "tiny-zh": {
-        "token_rate": 13
-    },
-    "tiny-ja": {
-        "token_rate": 13
-    },
-    "tiny-ko": {
-        "token_rate": 13
-    },
-    "tiny-uk": {
-        "token_rate": 8
-    },
-    "tiny-vi": {
-        "token_rate": 13
-    },
-    "base": {
-        "token_rate": 6
-    },
-    "base-es": {
-        "token_rate": 6
-    }
+    "tiny": {"token_rate": 6},
+    "tiny-ar": {"token_rate": 13},
+    "tiny-zh": {"token_rate": 13},
+    "tiny-ja": {"token_rate": 13},
+    "tiny-ko": {"token_rate": 13},
+    "tiny-uk": {"token_rate": 8},
+    "tiny-vi": {"token_rate": 13},
+    "base": {"token_rate": 6},
+    "base-es": {"token_rate": 6},
 }
+
 
 def _get_weights(model_name):
     from huggingface_hub import hf_hub_download

@@ -1,39 +1,20 @@
 _MOONSHINE_FLAVORS = {
-    "tiny": {
-        "token_rate": 6
-    },
-    "tiny-ar": {
-        "token_rate": 13
-    },
-    "tiny-zh": {
-        "token_rate": 13
-    },
-    "tiny-ja": {
-        "token_rate": 13
-    },
-    "tiny-ko": {
-        "token_rate": 13
-    },
-    "tiny-uk": {
-        "token_rate": 8
-    },
-    "tiny-vi": {
-        "token_rate": 13
-    },
-    "base": {
-        "token_rate": 6
-    },
-    "base-es": {
-        "token_rate": 6
-    }
+    "tiny": {"token_rate": 6},
+    "tiny-ar": {"token_rate": 13},
+    "tiny-zh": {"token_rate": 13},
+    "tiny-ja": {"token_rate": 13},
+    "tiny-ko": {"token_rate": 13},
+    "tiny-uk": {"token_rate": 8},
+    "tiny-vi": {"token_rate": 13},
+    "base": {"token_rate": 6},
+    "base-es": {"token_rate": 6},
 }
+
 
 def _get_onnx_weights(model_name, precision="float"):
     from huggingface_hub import hf_hub_download
 
-    assert model_name in _MOONSHINE_FLAVORS, (
-        f'Unknown model "{model_name}"'
-    )
+    assert model_name in _MOONSHINE_FLAVORS, f'Unknown model "{model_name}"'
 
     repo = "UsefulSensors/moonshine"
     subfolder = f"onnx/merged/{model_name}/{precision}"
@@ -45,7 +26,9 @@ def _get_onnx_weights(model_name, precision="float"):
 
 
 class MoonshineOnnxModel(object):
-    def __init__(self, models_dir=None, model_name=None, model_precision="float", token_rate=None):
+    def __init__(
+        self, models_dir=None, model_name=None, model_precision="float", token_rate=None
+    ):
         import onnxruntime
 
         if models_dir is None:
